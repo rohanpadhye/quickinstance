@@ -96,7 +96,7 @@ public class CachingInstrumentationAgent implements ClassFileTransformer {
                     byte[] origBytes = Files.readAllBytes(referenceFile.toPath());
                     if (Arrays.equals(cbuf, origBytes)) {
                         byte[] instBytes = Files.readAllBytes(cachedFile.toPath());
-                        System.err.printf("[instrument] %s found in disk-cache!\n", cname);
+                        //System.err.printf("[instrument] %s found in disk-cache!\n", cname);
                         return instBytes;
                     }
                 } catch (IOException e) {
@@ -119,7 +119,7 @@ public class CachingInstrumentationAgent implements ClassFileTransformer {
                     out.write(cbuf);
                 }
 
-                System.err.printf("[instrument] %s instrumented successfully.\n", cname);
+                //System.err.printf("[instrument] %s instrumented successfully.\n", cname);
             } catch(Exception e) {
                 e.printStackTrace();
             }
