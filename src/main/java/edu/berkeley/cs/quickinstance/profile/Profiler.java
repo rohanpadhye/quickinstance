@@ -29,6 +29,7 @@
 package edu.berkeley.cs.quickinstance.profile;
 
 import java.io.PrintStream;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Rohan Padhye
@@ -36,17 +37,19 @@ import java.io.PrintStream;
 public class Profiler {
     private Profiler() {}
 
-    private static long successes = 0;
-    private static long failures = 0;
+    private static AtomicLong successes = new AtomicLong(0);
+    private static AtomicLong failures = new AtomicLong(0);
 
     static {
         PrintStream out = System.err;
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            long total = successes + failures;
+            long s = successes.longValue();
+            long f = failures.longValue();
+            long total = s + f;
             out.printf("instanceof: total=%d, success=%d (%.2f), fail=%d (%.2f)\n",
                    total,
-                   successes, ((float) successes)/((float) total),
-                   failures, ((float) failures)/((float) total));
+                   s, ((float) s)/((float) total),
+                   f, ((float) f)/((float) total));
         }));
     }
 
@@ -63,9 +66,9 @@ public class Profiler {
         final boolean success = _instanceOf(object, clazz);
         synchronized (Profiler.class) {
             if (success) {
-                successes++;
+                successes.incrementAndGet();
             } else {
-                failures++;
+                failures.incrementAndGet();
             }
         }
         return success;
