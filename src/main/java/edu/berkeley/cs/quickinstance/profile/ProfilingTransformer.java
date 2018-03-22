@@ -28,11 +28,8 @@
  */
 package edu.berkeley.cs.quickinstance.profile;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
-import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 
 import edu.berkeley.cs.quickinstance.SafeClassWriter;
@@ -43,70 +40,28 @@ import org.objectweb.asm.ClassWriter;
 /**
  * @author Rohan Padhye
  */
+@SuppressWarnings("unused") // Instatiated dynamically
 public class ProfilingTransformer implements ClassFileTransformer {
 
-    private static String[] banned = {"[", "java", "sun", "jdk",
-            "org/objectweb/asm", "edu/berkeley/cs/quickinstance", "org/w3c"};
+    static {
 
-    public static void premain(String agentArgs, Instrumentation inst) throws ClassNotFoundException {
-        Profiler.init();
-        inst.addTransformer(new ProfilingTransformer(), true);
     }
-
-    private static boolean shouldExclude(String cname) {
-        for (String e : banned) {
-            if (cname.startsWith(e)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    String instDir = ".cache";
 
     @Override
-    synchronized public byte[] transform(ClassLoader loader, String cname, Class<?> classBeingRedefined,
-                                         ProtectionDomain d, byte[] cbuf)
-            throws IllegalClassFormatException {
-
-        // Do not instrument the JDK or instrumentation classes
-        if (shouldExclude(cname)) {
-            return null;
-        }
-
-
+    public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
+                            ProtectionDomain d, byte[] cbuf) throws IllegalClassFormatException {
         ClassReader cr = new ClassReader(cbuf);
         ClassWriter cw = new SafeClassWriter(cr,  loader,
                 ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-        ClassVisitor cv = new ProfilingClassVisitor(cw, cname);
 
         try {
+            ClassVisitor cv = new ProfilingClassVisitor(cw, className);
             cr.accept(cv, 0);
         } catch (Throwable e) {
-            System.err.printf("Error instrumenting class %s: %s\n", cname, e.getMessage());
+            System.err.printf("[instrument] %s could not be instrumented: %s\n", className, e.getMessage());
             return null;
         }
 
-        byte[] ret = cw.toByteArray();
-
-        if (instDir != null) {
-            try {
-                File cachedFile = new File(instDir + "/" + cname + ".instrumented.class");
-                File referenceFile = new File(instDir + "/" + cname + ".original.class");
-                File parent = new File(cachedFile.getParent());
-                parent.mkdirs();
-                try(FileOutputStream out = new FileOutputStream(cachedFile)) {
-                    out.write(ret);
-                }
-                try(FileOutputStream out = new FileOutputStream(referenceFile)) {
-                    out.write(cbuf);
-                }
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        return ret;
+        return cw.toByteArray();
     }
-
 }

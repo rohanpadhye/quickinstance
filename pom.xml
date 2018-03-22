@@ -42,7 +42,7 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Premain-Class>edu.berkeley.cs.quickinstance.profile.ProfilingTransformer</Premain-Class>
+                            <Premain-Class>edu.berkeley.cs.quickinstance.CachingInstrumentationAgent</Premain-Class>
                             <Can-Redefine-Classes>true</Can-Redefine-Classes>
                             <Can-Retransform-Classes>true</Can-Retransform-Classes>
                         </manifestEntries>
