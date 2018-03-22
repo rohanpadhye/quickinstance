@@ -39,7 +39,7 @@ public class Profiler {
     private static long successes = 0;
     private static long failures = 0;
 
-    static void init() {
+    static {
         PrintStream out = System.err;
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             long total = successes + failures;
