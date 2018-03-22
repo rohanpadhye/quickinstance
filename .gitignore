@@ -1,0 +1,12 @@
+.DS_Store
+build/
+target/
+*.iml
+*.pyc
+.cache/
+.idea/
+*.log
+*.swp
+.java-version
+dependency-reduced-pom.xml
+tmp/
