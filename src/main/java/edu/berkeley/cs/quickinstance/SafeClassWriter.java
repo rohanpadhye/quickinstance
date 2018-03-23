@@ -47,6 +47,10 @@ public class SafeClassWriter extends ClassWriter {
 
     private final ClassLoader loader;
 
+    public SafeClassWriter(ClassLoader loader, final int flags) {
+        super(flags);
+        this.loader = loader != null ? loader : ClassLoader.getSystemClassLoader();
+    }
     
     public SafeClassWriter(ClassReader cr, ClassLoader loader, final int flags) {
         super(cr, flags);
