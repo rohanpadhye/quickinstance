@@ -39,17 +39,24 @@ public class Profiler {
 
     private static AtomicLong successes = new AtomicLong(0);
     private static AtomicLong failures = new AtomicLong(0);
+    private static AtomicLong interfaces = new AtomicLong(0);
+    private static AtomicLong jdkLhs = new AtomicLong(0);
+    private static boolean jdkProfileOn = false;
 
     static {
         PrintStream out = System.err;
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             long s = successes.longValue();
             long f = failures.longValue();
+            long i = interfaces.longValue();
+            long j = jdkProfileOn ? jdkLhs.longValue() : -1;
             long total = s + f;
-            out.printf("instanceof: total=%d, success=%d (%.2f), fail=%d (%.2f)\n",
+            out.printf("instanceof: total=%d, success=%d (%.2f), fail=%d (%.2f), itf=%d (%.2f), jdk=%d (%.2f)\n",
                    total,
                    s, ((float) s)/((float) total),
-                   f, ((float) f)/((float) total));
+                   f, ((float) f)/((float) total),
+                   i, ((float) i)/((float) total),
+                   j, j == -1 ? Float.NaN : ((float) j)/((float) total) );
         }));
     }
 
@@ -64,13 +71,22 @@ public class Profiler {
 
     public static boolean instanceOf(Object object, Class clazz) {
         final boolean success = _instanceOf(object, clazz);
-        synchronized (Profiler.class) {
-            if (success) {
-                successes.incrementAndGet();
-            } else {
-                failures.incrementAndGet();
-            }
+        if (success) {
+            successes.incrementAndGet();
+        } else {
+            failures.incrementAndGet();
+        }
+        if (clazz.isInterface()) {
+            interfaces.incrementAndGet();
         }
         return success;
+    }
+
+    public static boolean instanceOf(Object object, Class lhs, Class rhs) {
+        jdkProfileOn = true;
+        if (lhs.getName().startsWith("java.")) {
+            jdkLhs.incrementAndGet();
+        }
+        return instanceOf(object, rhs);
     }
 }

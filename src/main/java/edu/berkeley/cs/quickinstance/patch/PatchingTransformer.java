@@ -40,6 +40,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
@@ -96,15 +98,25 @@ public class PatchingTransformer implements ClassFileTransformer {
 
                 // Then, look for instanceof instructions
                 ListIterator<AbstractInsnNode> it = methodNode.instructions.iterator();
+                int idx = 0;
                 while (it.hasNext()) {
-                    int idx = it.nextIndex();
                     AbstractInsnNode insn = it.next();
                     if (insn.getOpcode() == INSTANCEOF) { // ohh, the irony
                         TypeInsnNode typeInsn = ((TypeInsnNode) insn);
-//                        System.out.printf("instanceof in method %s#%s: (%s, %s)\n  -- Frame: %s\n",
+                        String rhsType = typeInsn.desc;
+//                        System.out.printf("instanceof in method %s#%s: (%s, %s)\n",
 //                                classNode.name, methodNode.name,
-//                                getTopOfStack(frames[idx]), typeInsn.desc, frames[idx]);
+//                                getTopOfStack(frames[idx]), typeInsn.desc);
+                        String lhsType = getTopOfStack(frames[idx]);
+
+                        // Remove the instanceof operation and replace with static method call
+                        it.remove();
+                        it.add(new LdcInsnNode(Type.getObjectType(lhsType)));
+                        it.add(new LdcInsnNode(Type.getObjectType(rhsType)));
+                        it.add(new MethodInsnNode(INVOKESTATIC, "edu/berkeley/cs/quickinstance/profile/Profiler",
+                                "instanceOf", "(Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/Class;)Z", false));
                     }
+                    idx++;
                 }
 
             }
@@ -115,6 +127,6 @@ public class PatchingTransformer implements ClassFileTransformer {
         int topIdx = frame.getStackSize() - 1;
         BasicValue value = frame.getStack(topIdx);
         Type type = value.getType();
-        return type.getClassName();
+        return type.getInternalName();
     }
 }

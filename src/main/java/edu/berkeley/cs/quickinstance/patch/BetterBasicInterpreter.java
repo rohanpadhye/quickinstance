@@ -86,7 +86,7 @@ public class BetterBasicInterpreter extends BasicInterpreter {
         int sort2 = w.getType().getSort();
 
         // If either of the types are reference types, try to do a type-hierarchy merge
-        if (sort1 == ARRAY || sort1 == OBJECT || sort2 == ARRAY || sort2 == OBJECT) {
+        if ((sort1 == ARRAY || sort1 == OBJECT) && (sort2 == ARRAY || sort2 == OBJECT)) {
 
             /*
              * Alright, time to deal with some weird stuff.
