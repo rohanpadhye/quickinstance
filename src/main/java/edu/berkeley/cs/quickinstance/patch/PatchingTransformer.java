@@ -77,7 +77,7 @@ public class PatchingTransformer implements ClassFileTransformer {
             return cw.toByteArray();
         } catch (Exception e) {
             System.err.printf("[instrument] %s could not be instrumented: %s\n", className, e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
             return null;
         }
 

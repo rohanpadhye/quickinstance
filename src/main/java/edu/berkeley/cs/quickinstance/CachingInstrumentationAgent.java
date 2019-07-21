@@ -108,7 +108,7 @@ public class CachingInstrumentationAgent implements ClassFileTransformer {
         byte[] ret = delegate.transform(loader, cname, classBeingRedefined, d, cbuf);
 
 
-        if (instDir != null) {
+        if (instDir != null && ret != null) {
             try {
                 cachedFile.getParentFile().mkdirs();
                 referenceFile.getParentFile().mkdirs();
