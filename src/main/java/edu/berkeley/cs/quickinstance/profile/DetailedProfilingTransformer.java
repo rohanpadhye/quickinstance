@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package edu.berkeley.cs.quickinstance.patch;
+package edu.berkeley.cs.quickinstance.profile;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -40,7 +40,6 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -50,13 +49,14 @@ import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.BasicValue;
 import org.objectweb.asm.tree.analysis.Frame;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.INSTANCEOF;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 
 /**
  * @author Rohan Padhye
  */
 @SuppressWarnings("unused") // Instatiated dynamically
-public class PatchingTransformer implements ClassFileTransformer {
+public class DetailedProfilingTransformer implements ClassFileTransformer {
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
@@ -85,10 +85,6 @@ public class PatchingTransformer implements ClassFileTransformer {
     }
 
     public void runOn(ClassNode classNode) throws AnalyzerException {
-        // Add unique type ID TODO: Generate fresh type ID
-        classNode.fields.add(new FieldNode(ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
-                "__typeID__", "J", null, Long.valueOf(1)));
-
         // Go through all methods with code
         for (MethodNode methodNode : classNode.methods) {
             if (methodNode.instructions.size() > 0) {
@@ -100,11 +96,14 @@ public class PatchingTransformer implements ClassFileTransformer {
                 // Then, look for instanceof instructions
                 ListIterator<AbstractInsnNode> it = methodNode.instructions.iterator();
                 int idx = 0;
-                while (!it.hasNext()) {
+                while (it.hasNext()) {
                     AbstractInsnNode insn = it.next();
                     if (insn.getOpcode() == INSTANCEOF) { // ohh, the irony
                         TypeInsnNode typeInsn = ((TypeInsnNode) insn);
                         String rhsType = typeInsn.desc;
+//                        System.out.printf("instanceof in method %s#%s: (%s, %s)\n",
+//                                classNode.name, methodNode.name,
+//                                getTopOfStack(frames[idx]), typeInsn.desc);
                         String lhsType = getTopOfStack(frames[idx]);
 
                         // Remove the instanceof operation and replace with static method call
